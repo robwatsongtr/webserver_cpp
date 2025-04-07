@@ -32,7 +32,6 @@ namespace WebServer {
             void sendResponse();    
     };
 
-    //  
     class Server {
         public:
             Server(std::string ip_address, int port);
