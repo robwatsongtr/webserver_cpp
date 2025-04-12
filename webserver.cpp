@@ -8,6 +8,19 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+// ---- Server constructor and destructor implementations
+
+WebServer::Server::Server(std::string ip_address, int port) : 
+    m_ip_address(ip_address), m_port(port), m_server_socket(-1) {}
+
+WebServer::Server::~Server() {
+    if (m_server_socket >= 0) {
+        close(m_server_socket);
+    } 
+}
+
+// ---- Connection constructor and destructor implementations  
+
 WebServer::Connection::Connection(int client_socket) : 
     m_client_socket(client_socket) {}
 
@@ -18,11 +31,11 @@ WebServer::Connection::~Connection() {
     } 
 }
 
-WebServer::Server::Server(std::string ip_address, int port) : 
-    m_ip_address(ip_address), m_port(port), m_server_socket(-1) {}
+// ------ Server Method implementations 
 
-WebServer::Server::~Server() {
-    if (m_server_socket >= 0) {
-        close(m_server_socket);
-    } 
-}
+
+
+
+
+
+// ------ Connection Method implementations 
