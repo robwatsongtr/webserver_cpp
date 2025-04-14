@@ -24,10 +24,10 @@ namespace WebServer {
     class Connection {
         public:
             Connection(int client_socket);
-            ~Connection(); // Ensure client socket is closed when connection object goes out of scope
+            ~Connection(); 
 
         private:
-            int m_client_socket; // take ownership of request 
+            int m_client_socket; 
             std::string buildResponse();
             void sendResponse();    
     };
@@ -35,17 +35,15 @@ namespace WebServer {
     class Server {
         public:
             Server(std::string ip_address, int port);
-            ~Server(); // close listening socket on server shutdown
+            ~Server(); 
+            void acceptConnections();
+            int startServer();
 
-            void startListen();
-            
         private:
+            std::string m_ip_address;
             int m_port;
             int m_server_socket;
-            std::string m_ip_address;
-
-            void acceptConnections();
-            void closeServer();
+            struct sockaddr_in m_server_addr; 
     };
 
 }

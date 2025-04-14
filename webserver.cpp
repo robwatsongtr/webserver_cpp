@@ -8,30 +8,69 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-// ---- Server constructor and destructor implementations
+// ---- Server constructor and destructor implementations -----------
 
 WebServer::Server::Server(std::string ip_address, int port) : 
-    m_ip_address(ip_address), m_port(port), m_server_socket(-1) {}
-
-WebServer::Server::~Server() {
-    if (m_server_socket >= 0) {
-        close(m_server_socket);
-    } 
+                                    m_ip_address(ip_address), 
+                                    m_port(port), 
+                                    m_server_socket(),
+                                    m_server_addr() // struct sockaddr_in
+{
+    // set up server address 
+    memset(&m_server_addr, 0, sizeof(m_server_addr)); // zero out struct
+    m_server_addr.sin_family = AF_INET; // internet comms, not IPC or other
+    m_server_addr.sin_port = htons(m_port); // Convert to network byte order
+    m_server_addr.sin_addr.s_addr = INADDR_ANY; // bind to all interfaces
 }
 
-// ---- Connection constructor and destructor implementations  
+WebServer::Server::~Server() {
+    close(m_server_socket);
+}
+
+// ------ Server Method implementations --------------------------------
+
+int WebServer::Server::startServer() {
+    // create socket of domain internet, type sockstream, protocol 0
+    m_server_socket = socket(AF_INET, SOCK_STREAM, 0); 
+    if (m_server_socket < 0) {
+        std::cerr << "Error opening socket" << std::endl;
+        return 1;
+    }
+
+    // bind socket to address. Call bind and immediately check for error state 
+    if (bind(m_server_socket, (struct sockaddr *) &m_server_addr, 
+        sizeof(m_server_addr)) < 0) 
+    {
+        std::cerr << "Error binding socket" << std::endl;
+        return 1;
+    }
+
+    // listen on socket
+    if (listen(m_server_socket, SOMAXCONN) < 0) {
+        std::cerr << "Error listening on socket" << std::endl;
+        return 1;
+    }
+
+    return 0;
+}
+
+void WebServer::Server::acceptConnections() {
+
+}
+
+
+
+
+
+// ---- Connection constructor and destructor implementations ––------------- 
 
 WebServer::Connection::Connection(int client_socket) : 
     m_client_socket(client_socket) {}
 
 WebServer::Connection::~Connection() {
-    // if check because an invalid socket returns -1 in POSIX
-    if (m_client_socket >= 0) {
-        close(m_client_socket);
-    } 
+    close(m_client_socket);
 }
 
-// ------ Server Method implementations 
 
 
 
