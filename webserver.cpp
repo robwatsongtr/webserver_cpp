@@ -14,7 +14,8 @@ WebServer::Server::Server(std::string ip_address, int port) :
                                     m_ip_address(ip_address), 
                                     m_port(port), 
                                     m_server_socket(),
-                                    m_server_addr() // struct sockaddr_in
+                                    m_server_addr(), // struct sockaddr_in
+                                    m_client_addr() // struct
 {
     // set up server address 
     memset(&m_server_addr, 0, sizeof(m_server_addr)); // zero out struct
@@ -55,17 +56,31 @@ int WebServer::Server::startServer() {
 }
 
 void WebServer::Server::acceptConnections() {
+    std::cout << "Server listening on port " << ntohs(m_server_addr.sin_port) 
+        << std::endl;
 
+        while (true) {
+            socklen_t client_len = sizeof(m_client_addr);   
+            client_socket = accept(m_server_socket, (struct sockaddr *) 
+                &m_client_addr, &client_len);
+
+            if (client_socket < 0) {
+                std::cerr << "Error accepting connection" << std::endl;
+                continue;
+            }
+
+            std::cout << "Accepted new connection" << std::endl;
+            // pass off connection to Connection class 
+            WebServer::Connection new_conn(client_socket);
+        }
 }
-
-
 
 
 
 // ---- Connection constructor and destructor implementations ––------------- 
 
-WebServer::Connection::Connection(int client_socket) : 
-    m_client_socket(client_socket) {}
+WebServer::Connection::Connection(int client_socket) 
+    : m_client_socket(client_socket) {}
 
 WebServer::Connection::~Connection() {
     close(m_client_socket);

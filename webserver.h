@@ -43,7 +43,9 @@ namespace WebServer {
             std::string m_ip_address;
             int m_port;
             int m_server_socket;
+            int client_socket; 
             struct sockaddr_in m_server_addr; 
+            struct sockaddr_in m_client_addr; // passed to Connection
     };
 
 }
