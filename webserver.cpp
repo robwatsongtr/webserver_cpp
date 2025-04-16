@@ -69,12 +69,20 @@ void WebServer::Server::acceptConnections() {
                 continue;
             }
 
-            std::cout << "Accepted new connection" << std::endl;
+            // Declares a char array big enough to hold a str or IP$ address
+            char client_ip[INET_ADDRSTRLEN];
+            // This converts the raw binary IP address into a human-readable string.
+            inet_ntop(AF_INET, &(m_client_addr.sin_addr), client_ip, INET_ADDRSTRLEN);
+            int client_port = ntohs(m_client_addr.sin_port);
+
+            std::cout << "Accepted connection from " << client_ip << ":" << client_port 
+                << std::endl;
+
             // pass off connection to Connection class 
             WebServer::Connection new_conn(client_socket);
+            new_conn.handleTest();
         }
 }
-
 
 
 // ---- Connection constructor and destructor implementations ––------------- 
@@ -86,10 +94,19 @@ WebServer::Connection::~Connection() {
     close(m_client_socket);
 }
 
+// ------ Connection Method implementations ----------------------------
+
+void WebServer::Connection::handleTest() {
+    const char* response = 
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: text/plain\r\n"
+        "Content-Length: 14\r\n"
+        "\r\n"
+        "Hello, world!\n";
+    
+    send(m_client_socket, response, strlen(response), MSG_NOSIGNAL);
+}
 
 
 
 
-
-
-// ------ Connection Method implementations 

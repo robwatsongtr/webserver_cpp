@@ -26,10 +26,12 @@ namespace WebServer {
             Connection(int client_socket);
             ~Connection(); 
 
-        private:
-            int m_client_socket; 
+            void handleTest();
             std::string buildResponse();
             void sendResponse();    
+
+        private:
+            int m_client_socket; 
     };
 
     class Server {
