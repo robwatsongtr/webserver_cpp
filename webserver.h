@@ -4,37 +4,24 @@
 #include <iostream>
 #include <cstring>
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
+// #include <sys/types.h>
+// #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
 /*
+Design of 'Basic but Non-Trivial Webserver': 
+    - Separate socket management (Server) for setup and listening 
+    - Connection class is handling an individual client I/O
+    - Response class builds the HTML response, and passes it along to 
+        connection class
 
-Design of webserver: 
-    Separate socket management (Server) for setup and listening 
-    Connection class is handling an individual client. 
-
-Single-threaded blocking server currently (4/7/25)
-
+Single-threaded blocking server currently 
 */
 
 namespace WebServer {
 
-    class Connection {
-        public:
-            Connection(int client_socket);
-            ~Connection(); 
-
-            void handleTest();
-            std::string buildResponse();
-            void sendResponse();    
-
-        private:
-            int m_client_socket; 
-    };
-
-    class Server {
+     class Server {
         public:
             Server(std::string ip_address, int port);
             ~Server(); 
@@ -48,6 +35,38 @@ namespace WebServer {
             int client_socket; 
             struct sockaddr_in m_server_addr; 
             struct sockaddr_in m_client_addr; // passed to Connection
+    };
+
+    class Connection {
+        public:
+            Connection(int client_socket);
+            ~Connection(); 
+
+            void connectionTest();
+
+            void sendHttpResponse(  int clientSocket, 
+                                    const std::string& status, 
+                                    const std::string& contentType, 
+                                    const char* body,
+                                    size_t bodyLength );
+
+            void sendFile(  int clientSocket, 
+                            const std::string& basePath, 
+                            const std::string& requestedFile );
+
+            // Todo later:
+            // Helper function to check for safe file paths
+            // i.e. 'bool isPathSave' 
+
+        private:
+            int m_client_socket; 
+    };
+
+    class Response {
+        public:
+
+        private:
+
     };
 
 }
