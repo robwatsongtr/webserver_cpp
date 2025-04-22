@@ -116,13 +116,9 @@ void WebServer::Response::handleRequest() {
     char buffer[4096];
     ssize_t bytesRead = recv(m_client_socket, buffer, sizeof(buffer), 0);
 
-    if (bytesRead == 0) {
-        std::cout << "Connection closed by client" << std::endl;
-    } else if (bytesRead < 0) {
+    if (bytesRead < 0) {
         std::cout << "recv failed" << std::endl;
-    } else {
-        std::cout << "Received: " << buffer << std::endl;
-    }
+    } 
 
     // create string object containing data, and its size so all the data gets in 
     std::string incomingRequest(buffer, bytesRead);
@@ -195,12 +191,12 @@ void WebServer::Response::sendFile( const std::string& basePath,
         return;
     }
 
-    // send header
+    // send header. ** hardcoding content type to text/html for now 
     std::string header = 
         "HTTP/1.1 200 OK\r\n"
-        "Content-Type: application/octet-stream\r\n"
+        "Content-Type: text/html\r\n"
         "Content-Length: " + std::to_string(fileStat.st_size) + "\r\n"
-        "Connection: close\r\n"
+        "Connection: keep-alive\r\n"
         "\r\n";
 
     send(m_client_socket, header.c_str(), header.size(), 0);
