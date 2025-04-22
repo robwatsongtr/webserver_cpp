@@ -4,7 +4,7 @@
 #include <iostream>
 #include <cstring>
 #include <unistd.h> // for read(), write(), close()
-#include <sys/socket.h> // for send() and recv()
+#include <sys/socket.h> // for send() and recv() and accept()
 #include <sys/stat.h> // gets file information with struct stat 
 #include <netinet/in.h> // definitions for IP protocol family 
 #include <arpa/inet.h> // for sockaddr_in
@@ -80,6 +80,18 @@ namespace WebServer {
 
 
 #endif 
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
