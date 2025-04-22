@@ -112,7 +112,7 @@ WebServer::Response::Response(int client_socket)
 WebServer::Response::~Response() {}
 
 void WebServer::Response::handleRequest() {
-    // read http request from socket with recv(). POSIX likes ssize_t bc its signed
+    // 'receive' http request from socket with recv(). POSIX likes ssize_t bc its signed
     char buffer[4096];
     ssize_t bytesRead = recv(m_client_socket, buffer, sizeof(buffer), 0);
 
@@ -132,12 +132,13 @@ void WebServer::Response::handleRequest() {
 
     bool isValidRequest = parseHttpRequest(incomingRequest, requestedFile);
     if (!isValidRequest) {
-        const char* errorMsg = "Invalid HTTP request.\n";
-        sendHttpResponse("400 Bad Request", "text/plain", errorMsg, strlen(errorMsg));
+        const char* msg = "Invalid HTTP request.\n";
+        sendTextHttpResponse("400 Bad Request", msg, strlen(msg));
         return;
     }
 
-
+    std::string basePath = "/users/robertwatson/Code/webserver_cpp/public";
+    sendFile(basePath, requestedFile);
 
 }
 
@@ -149,20 +150,19 @@ bool WebServer::Response::parseHttpRequest( const std::string& request,
     std::string method, path, version; 
     reqStream >> method >> path >> version;
 
-    if (method != "GET") { return false; } 
+    if (method != "GET") { return false; } // Only GET for now. 
     requestedFile = (path == "/") ? "/index.html" : path; 
 
     return true; 
 }
 
-void WebServer::Response::sendHttpResponse( const std::string& status, 
-                                            const std::string& contentType,            
-                                            const char* body,
-                                            size_t bodyLength )  
+void WebServer::Response::sendTextHttpResponse( const std::string& status, 
+                                                const char* body,
+                                                size_t bodyLength )  
 {
    std::string header = 
         "HTTP/1.1 " + status + "\r\n" +
-        "Content-Type: " + contentType + "\r\n" +
+        "Content-Type: " + "text/plain" + "\r\n" +
         "Content-Length: " + std::to_string(bodyLength) + "\r\n" +
         "Connection: close\r\n" +
         "\r\n";
@@ -175,6 +175,43 @@ void WebServer::Response::sendHttpResponse( const std::string& status,
 void WebServer::Response::sendFile( const std::string& basePath, 
                                     const std::string& requestedFile )
 {
+    std::string fullPath = basePath + requestedFile;
 
+    // open the file or it doesn't exist. fd = file descriptor, OS process unique identifier
+    int file_fd = open(fullPath.c_str(), O_RDONLY); // 
+    if (file_fd < 0) {
+        const char* msg = "File not found.\n";
+        sendTextHttpResponse("404 Not Found",  msg, strlen(msg));
+        return;
+    }
+
+    // general check about the validity of the file itself using struct stat 
+    // also gets other info like size of file in bytes, permissions, last modified, etc. 
+    struct stat fileStat;
+    if (fstat(file_fd, &fileStat) < 0) {
+        close(file_fd);
+        const char* msg = "Server error.\n";
+        sendTextHttpResponse("500 Internal Server Error", msg, strlen(msg));
+        return;
+    }
+
+    // send header
+    std::string header = 
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: application/octet-stream\r\n"
+        "Content-Length: " + std::to_string(fileStat.st_size) + "\r\n"
+        "Connection: close\r\n"
+        "\r\n";
+
+    send(m_client_socket, header.c_str(), header.size(), 0);
+
+    // send file
+    char buffer[4096];
+    ssize_t bytesRead;
+    while ((bytesRead = read(file_fd, buffer, sizeof(buffer))) > 0) {
+        send(m_client_socket, buffer, bytesRead, 0);
+    }
+
+    close(file_fd);
 }
 
