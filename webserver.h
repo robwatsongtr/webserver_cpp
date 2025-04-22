@@ -3,17 +3,17 @@
 
 #include <iostream>
 #include <cstring>
-#include <unistd.h>
-// #include <sys/types.h>
-// #include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include <unistd.h> // for read(), write(), close()
+#include <sys/socket.h> // for send()
+// #include <netinet/in.h>
+#include <arpa/inet.h> // for sockaddr_in
+#include <sstream>  // for stringstream 
 
 /*
-Design of 'Basic but Non-Trivial Webserver': 
-    - Separate socket management (Server) for setup and listening 
+Design of 'Basic but Non-Totally-Trivial Webserver': 
+    - Server class for setup and listening 
     - Connection class is handling an individual client I/O
-    - Response class builds the HTML response, and passes it along to 
+    - Response class parses request, grabs a file,and passes it along to 
         connection class
 
 Single-threaded blocking server currently 
@@ -43,20 +43,7 @@ namespace WebServer {
             ~Connection(); 
 
             void connectionTest();
-
-            void sendHttpResponse(  int clientSocket, 
-                                    const std::string& status, 
-                                    const std::string& contentType, 
-                                    const char* body,
-                                    size_t bodyLength );
-
-            void sendFile(  int clientSocket, 
-                            const std::string& basePath, 
-                            const std::string& requestedFile );
-
-            // Todo later:
-            // Helper function to check for safe file paths
-            // i.e. 'bool isPathSave' 
+            void handleConnection();
 
         private:
             int m_client_socket; 
@@ -64,9 +51,28 @@ namespace WebServer {
 
     class Response {
         public:
+            Response(int client_socket);
+            ~Response();
+
+            void handleRequest();
+
+            bool parseHttpRequest(  const std::string& request, 
+                                    std::string& requestedFile );
+
+            void sendHttpResponse(  const std::string& status, 
+                                    const std::string& contentType,            
+                                    const char* body,
+                                    size_t bodyLength );
+
+            void sendFile(  const std::string& basePath, 
+                            const std::string& requestedFile );
+            
+            // Todo later:
+            // Helper function to check for safe file paths
+            // i.e. 'bool isPathSafe' 
 
         private:
-
+            int m_client_socket; 
     };
 
 }

@@ -71,7 +71,7 @@ void WebServer::Server::acceptConnections() {
 
         // pass off connection to Connection class 
         WebServer::Connection newConn(client_socket);
-        newConn.connectionTest();
+        newConn.handleConnection();
     }
 }
 
@@ -82,6 +82,7 @@ WebServer::Connection::Connection(int client_socket)
     : m_client_socket(client_socket) {}
 
 WebServer::Connection::~Connection() {
+    // good quality RIAA here. 
     close(m_client_socket);
 }
 
@@ -96,8 +97,84 @@ void WebServer::Connection::connectionTest() {
     send(m_client_socket, response, strlen(response), MSG_NOSIGNAL);
 }
 
-
-
+void WebServer::Connection::handleConnection() {
+    // simply hand off to a response object. TODO for future: Error handling, logging 
+    WebServer::Response response(m_client_socket);
+    response.handleRequest();
+}
 
 
 // ---------------------- Response Class implementations --------––------------- 
+
+WebServer::Response::Response(int client_socket) 
+    : m_client_socket(client_socket) {}
+
+WebServer::Response::~Response() {}
+
+void WebServer::Response::handleRequest() {
+    // read http request from socket with recv(). POSIX likes ssize_t bc its signed
+    char buffer[4096];
+    ssize_t bytesRead = recv(m_client_socket, buffer, sizeof(buffer), 0);
+
+    if (bytesRead == 0) {
+        std::cout << "Connection closed by client" << std::endl;
+    } else if (bytesRead < 0) {
+        std::cout << "recv failed" << std::endl;
+    } else {
+        std::cout << "Received: " << buffer << std::endl;
+    }
+
+    // create string object containing data, and its size so all the data gets in 
+    std::string incomingRequest(buffer, bytesRead);
+
+    // init a string object to hold the requested file. Gets passed by ref to parser
+    std::string requestedFile; 
+
+    bool isValidRequest = parseHttpRequest(incomingRequest, requestedFile);
+    if (!isValidRequest) {
+        const char* errorMsg = "Invalid HTTP request.\n";
+        sendHttpResponse("400 Bad Request", "text/plain", errorMsg, strlen(errorMsg));
+        return;
+    }
+
+
+
+}
+
+bool WebServer::Response::parseHttpRequest( const std::string& request, 
+                                            std::string& requestedFile ) 
+{
+    // parse request with istringstream which conveniently works on whitespace.
+    std::istringstream reqStream(request);
+    std::string method, path, version; 
+    reqStream >> method >> path >> version;
+
+    if (method != "GET") { return false; } 
+    requestedFile = (path == "/") ? "/index.html" : path; 
+
+    return true; 
+}
+
+void WebServer::Response::sendHttpResponse( const std::string& status, 
+                                            const std::string& contentType,            
+                                            const char* body,
+                                            size_t bodyLength )  
+{
+   std::string header = 
+        "HTTP/1.1 " + status + "\r\n" +
+        "Content-Type: " + contentType + "\r\n" +
+        "Content-Length: " + std::to_string(bodyLength) + "\r\n" +
+        "Connection: close\r\n" +
+        "\r\n";
+
+    // send header, then send body 
+    send(m_client_socket, header.c_str(), header.size(), 0);
+    send(m_client_socket, body, bodyLength, 0);                                   
+}
+
+void WebServer::Response::sendFile( const std::string& basePath, 
+                                    const std::string& requestedFile )
+{
+
+}
+
