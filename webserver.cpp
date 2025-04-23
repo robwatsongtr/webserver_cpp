@@ -18,6 +18,7 @@ WebServer::Server::Server(std::string ip_address, int port) :
 
 WebServer::Server::~Server() {
     close(m_server_socket);
+    std::cout << "Server Socket Closed." << std::endl;
 }
 
 int WebServer::Server::startServer() {
@@ -84,6 +85,7 @@ WebServer::Connection::Connection(int client_socket)
 WebServer::Connection::~Connection() {
     // good quality RIAA here. 
     close(m_client_socket);
+    std::cout << "Connection Socket closed." << std::endl;
 }
 
 void WebServer::Connection::connectionTest() {
