@@ -1,9 +1,15 @@
-# webserver_cpp
+# Basic but Non-Totally-Trivial Webserver
 
-Design of 'Basic but Non-Totally-Trivial Webserver': 
-    - Server class for setup and listening 
-    - Connection class is handling an individual client I/O
-    - Response class parses request, grabs a file,and passes it along to 
-        connection class
+- **Server class**  
+  Responsible for setup and listening for incoming connections.
 
-Single-threaded blocking server currently 
+- **Connection class**  
+  Handles an individual client’s I/O.
+
+- **Response class**  
+  Parses the request, grabs a file, and passes it along to the connection class.
+
+---
+
+**Current state:**  
+Single-threaded, blocking server.
